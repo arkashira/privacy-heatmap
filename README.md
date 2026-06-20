@@ -1,2 +1,11 @@
-# privacy-heatmap
-axentx product · A self-hosted, privacy-focused analytics platform for WordPress site owners that provides heatmaps, funnels, and session analytics without sending visitor data to third-party cloud services
+# Privacy Heatmap
+
+A simple Python project for logging and exporting data access events.
+
+## Usage
+
+Run the project with `python -m src.privacy_heatmap`. The log retention period can be configured with the `--log-retention` argument.
+
+## Testing
+
+Run the tests with `python -m pytest tests`.
