@@ -3,8 +3,8 @@ requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry]
-name = "privacy-heatmap"
-version = "0.1.0"
+name = "collector"
+version = "1.0.0"
 description = ""
 
 [tool.poetry.dependencies]

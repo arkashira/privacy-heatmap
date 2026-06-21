@@ -1,11 +1,10 @@
-# Privacy Heatmap
-
-A simple Python project for logging and exporting data access events.
+# Collector
+A lightweight JavaScript collector for recording visitor events.
 
 ## Usage
-
-Run the project with `python -m src.privacy_heatmap`. The log retention period can be configured with the `--log-retention` argument.
+1. Generate the collector script using `generate_collector_script()`.
+2. Add the script to your webpage.
+3. Send events to the server using `fetch('/collect', ...)`.
 
 ## Testing
-
-Run the tests with `python -m pytest tests`.
+Run `pytest` to test the collector.
