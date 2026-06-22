@@ -14,55 +14,42 @@ class Collector:
     def collect(self, event: Event):
         self.events.append(event)
 
-    def store(self, db):
+    def store(self, db: dict):
         for event in self.events:
-            db.store(event)
+            db[event.type] = db.get(event.type, []) + [event.data]
 
-class Database:
-    def __init__(self):
-        self.events = []
-
-    def store(self, event: Event):
-        self.events.append(event)
-
-def generate_collector_script():
-    return """
-    // Lightweight JavaScript collector
-    function collectEvent(event) {
-        // Send event to server
-        fetch('/collect', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(event)
-        });
-    }
-
-    // Add event listeners
-    document.addEventListener('click', function(event) {
-        collectEvent({ type: 'click', data: { x: event.clientX, y: event.clientY } });
-    });
-
-    document.addEventListener('scroll', function(event) {
-        collectEvent({ type: 'scroll', data: { x: window.scrollX, y: window.scrollY } });
-    });
-
-    document.addEventListener('mousemove', function(event) {
-        collectEvent({ type: 'mouse-move', data: { x: event.clientX, y: event.clientY } });
-    });
-
-    document.addEventListener('focus', function(event) {
-        if (event.target.tagName === 'INPUT') {
-            collectEvent({ type: 'form-field focus', data: { id: event.target.id } });
+    def get_script(self) -> str:
+        script = """
+        function collectEvent(event) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/collect', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify(event));
         }
-    }, true);
-    """
 
-def get_collector_size():
-    script = generate_collector_script()
-    return len(script.encode('utf-8'))
+        document.addEventListener('click', function(event) {
+            collectEvent({ type: 'click', data: { x: event.clientX, y: event.clientY } });
+        });
 
-def get_execution_time():
-    # Simulate execution time
-    return 10  # ms
+        document.addEventListener('scroll', function(event) {
+            collectEvent({ type: 'scroll', data: { x: window.scrollX, y: window.scrollY } });
+        });
+
+        document.addEventListener('mousemove', function(event) {
+            collectEvent({ type: 'mouse-move', data: { x: event.clientX, y: event.clientY } });
+        });
+
+        document.addEventListener('focus', function(event) {
+            if (event.target.tagName === 'INPUT') {
+                collectEvent({ type: 'form-field focus', data: { id: event.target.id } });
+            }
+        }, true);
+        """
+        return script
+
+    def get_size(self) -> int:
+        return len(self.get_script())
+
+    def get_execution_time(self) -> float:
+        # Simulate execution time
+        return 10.0

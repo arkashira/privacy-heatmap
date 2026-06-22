@@ -1,10 +1,16 @@
 # Collector
 A lightweight JavaScript collector for recording visitor events.
 
-## Usage
-1. Generate the collector script using `generate_collector_script()`.
-2. Add the script to your webpage.
-3. Send events to the server using `fetch('/collect', ...)`.
+## Features
 
-## Testing
-Run `pytest` to test the collector.
+* Records click, scroll, mouse-move, and form-field focus events
+* Stores events in a MySQL table prefixed with `wp_ph_`
+* No HTTP requests are made to domains outside the host server
+
+## Usage
+
+1. Install the collector using pip: `pip install collector`
+2. Import the collector in your Python script: `from collector import Collector`
+3. Create a collector instance: `collector = Collector()`
+4. Collect events: `collector.collect(Event('click', {'x': 10, 'y': 20}))`
+5. Store events in a database: `collector.store(db)`
