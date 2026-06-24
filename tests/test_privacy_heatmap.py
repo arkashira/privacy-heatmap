@@ -1,54 +1,30 @@
 import pytest
-from io import StringIO
-from unittest.mock import MagicMock
-from privacy_heatmap import PrivacyHeatmap, Event
+from datetime import datetime, timedelta
+from privacy_heatmap import PrivacyHeatmap, LogEntry
 
 @pytest.fixture
-def db_connection():
-    class MockDBConnection:
-        def __init__(self):
-            self.execute_calls = []
+def heatmap():
+    return PrivacyHeatmap()
 
-        def execute(self, query, params):
-            self.execute_calls.append((query, params))
+def test_purge_records(heatmap):
+    heatmap.add_record({'timestamp': datetime.now() - timedelta(days=91)})
+    heatmap.add_record({'timestamp': datetime.now() - timedelta(days=89)})
+    assert heatmap.purge_records() == 1
+    assert len(heatmap.get_log()) == 1
 
-    return MockDBConnection()
+def test_purge_records_edge_case(heatmap):
+    heatmap.add_record({'timestamp': datetime.now() - timedelta(days=90)})
+    assert heatmap.purge_records() == 1
+    assert len(heatmap.get_log()) == 1
 
-def test_capture_event():
-    heatmap = PrivacyHeatmap()
-    event_type = "click"
-    event_data = {"x": 10, "y": 20}
-    heatmap.capture_event(event_type, event_data)
-    assert len(heatmap.events) == 1
-    assert heatmap.events[0].event_type == event_type
-    assert heatmap.events[0].event_data == event_data
+def test_set_retention_days(heatmap):
+    heatmap.set_retention_days(60)
+    assert heatmap.retention_days == 60
 
-def test_post_events():
-    heatmap = PrivacyHeatmap()
-    event_type = "click"
-    event_data = {"x": 10, "y": 20}
-    heatmap.capture_event(event_type, event_data)
-    endpoint = "https://example.com/endpoint"
-    posted_data = heatmap.post_events(endpoint)
-    assert posted_data == '[{"event_type": "click", "event_data": {"x": 10, "y": 20}}]'
-
-def test_persist_events(db_connection):
-    heatmap = PrivacyHeatmap()
-    event_type = "click"
-    event_data = {"x": 10, "y": 20}
-    heatmap.capture_event(event_type, event_data)
-    heatmap.persist_events(db_connection)
-    assert len(db_connection.execute_calls) == 1
-    assert db_connection.execute_calls[0][0] == "INSERT INTO wp_privacy_heatmap_events (event_type, event_data) VALUES (%s, %s)"
-    assert db_connection.execute_calls[0][1] == ("click", '{"x": 10, "y": 20}')
-
-def test_post_events_empty():
-    heatmap = PrivacyHeatmap()
-    endpoint = "https://example.com/endpoint"
-    posted_data = heatmap.post_events(endpoint)
-    assert posted_data == '[]'
-
-def test_persist_events_empty(db_connection):
-    heatmap = PrivacyHeatmap()
-    heatmap.persist_events(db_connection)
-    assert len(db_connection.execute_calls) == 0
+def test_log_entry(heatmap):
+    heatmap.add_record({'timestamp': datetime.now() - timedelta(days=91)})
+    heatmap.purge_records()
+    log_entry = heatmap.get_log()[0]
+    assert isinstance(log_entry, LogEntry)
+    assert log_entry.timestamp >= datetime.now() - timedelta(minutes=1)
+    assert log_entry.records_purged == 1
