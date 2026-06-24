@@ -1,38 +1,43 @@
 import json
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-import argparse
+from typing import List
 
 @dataclass
-class AuditLog:
-    user_id: int
-    timestamp: str
-    action: str
+class Event:
+    event_type: str
+    x: int
+    y: int
+    scroll_depth: int
 
-class PrivacyHeatmap:
-    def __init__(self, log_retention=180):
-        self.log_retention = log_retention
-        self.audit_log = []
+class LocalDataCollectionEngine:
+    def __init__(self):
+        self.events = []
 
-    def log_access(self, user_id, action):
-        self.audit_log.append(AuditLog(user_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), action))
-        self._prune_log()
+    def capture_event(self, event: Event):
+        self.events.append(event)
 
-    def _prune_log(self):
-        cutoff = datetime.now() - timedelta(days=self.log_retention)
-        self.audit_log = [log for log in self.audit_log if datetime.strptime(log.timestamp, "%Y-%m-%d %H:%M:%S") > cutoff]
+    def post_events(self, endpoint: str):
+        # Simulate posting events to a PHP endpoint
+        # In a real implementation, this would be replaced with an AJAX request
+        return json.dumps([event.__dict__ for event in self.events])
 
-    def export_log(self):
-        return json.dumps([{"user_id": log.user_id, "timestamp": log.timestamp, "action": log.action} for log in self.audit_log])
+    def persist_events(self, db: dict):
+        # Simulate persisting events in a custom MySQL table
+        # In a real implementation, this would be replaced with a database query
+        db['events'] = [event.__dict__ for event in self.events]
+        return db
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--log-retention", type=int, default=180)
-    args = parser.parse_args()
-    heatmap = PrivacyHeatmap(args.log_retention)
-    heatmap.log_access(1, "read")
-    heatmap.log_access(2, "write")
-    print(heatmap.export_log())
+    def main(self):
+        self.capture_event(Event('click', 10, 20, 50))
+        self.capture_event(Event('scroll', 30, 40, 60))
+        endpoint = 'https://example.com/endpoint'
+        posted_events = self.post_events(endpoint)
+        db = {}
+        persisted_db = self.persist_events(db)
+        return posted_events, persisted_db
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    engine = LocalDataCollectionEngine()
+    posted_events, persisted_db = engine.main()
+    print(posted_events)
+    print(persisted_db)
