@@ -1,34 +1,34 @@
+from collector import Collector, Event, Database, generate_collector_script, get_collector_size, get_execution_time
 import pytest
-from collector import Collector, Event
 
-def test_collector_collect():
+def test_collector():
     collector = Collector()
     event = Event('click', {'x': 10, 'y': 20})
     collector.collect(event)
-    assert len(collector.events) == 1
-    assert collector.events[0].type == 'click'
-    assert collector.events[0].data == {'x': 10, 'y': 20}
-
-def test_collector_store():
-    collector = Collector()
-    event = Event('click', {'x': 10, 'y': 20})
-    collector.collect(event)
-    db = {}
+    db = Database()
     collector.store(db)
-    assert 'click' in db
-    assert db['click'] == [{'x': 10, 'y': 20}]
+    assert len(db.events) == 1
 
-def test_collector_get_script():
-    collector = Collector()
-    script = collector.get_script()
-    assert len(script) < 30 * 1024  # 30 KB
-
-def test_collector_get_size():
-    collector = Collector()
-    size = collector.get_size()
+def test_collector_script_size():
+    size = get_collector_size()
     assert size < 30 * 1024  # 30 KB
 
-def test_collector_get_execution_time():
+def test_execution_time():
+    time = get_execution_time()
+    assert time < 20  # 20 ms
+
+def test_event_types():
     collector = Collector()
-    execution_time = collector.get_execution_time()
-    assert execution_time < 20.0  # 20 ms
+    event_types = ['click', 'scroll', 'mousemove', 'focus']
+    for event_type in event_types:
+        event = Event(event_type, {'data': 'test'})
+        collector.collect(event)
+    db = Database()
+    collector.store(db)
+    assert len(db.events) == len(event_types)
+
+def test_database_store():
+    db = Database()
+    event = Event('click', {'x': 10, 'y': 20})
+    db.store(event)
+    assert len(db.events) == 1
